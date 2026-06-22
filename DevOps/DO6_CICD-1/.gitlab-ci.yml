@@ -1,0 +1,50 @@
+stages:
+  - style
+  - build
+  - test
+  - deploy
+
+style:
+  stage: style
+  tags:
+    - style
+  script:
+    - clang-format -style=Google --Werror -n src/cat/*.c
+    - clang-format -style=Google --Werror -n src/grep/*.c
+  only:
+    - develop
+
+build:
+  stage: build
+  tags:
+    - build
+  script:
+    - cd src/cat && make && cd ../grep && make
+  artifacts:
+    paths:
+      - src/cat/s21_cat
+      - src/grep/s21_grep
+    expire_in: 30 days
+  only:
+    - develop
+
+test:
+  stage: test
+  tags:
+    - test
+  script:
+    - cd src/cat && make tests && cd ../grep && make tests
+  only:
+    - develop
+
+deploy:
+  stage: deploy
+  tags:
+    - deploy
+  when: manual
+  script:
+    - cd src && bash deploy.sh
+  only:
+    - develop
+  after_script:
+    - cd src && bash telegram.sh
